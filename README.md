@@ -128,7 +128,15 @@ WSGI_APPLICATION = 'boutique.wsgi.application'
 LOGIN_REDIRECT_URL = '/'
 ```
 - pip3 freeze > requirements.txt
+- mkdir templates
+- mkdir templates/allauth
+- git add .
+- git commit -m "setup allauth"
+- git push
 
+(didn't work
+cp -r ../.pip-modules/lib/python3.7/site-packages/allauth/templates/* ./templates/allauth/
+)
 
 
 
