@@ -207,7 +207,7 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request', # required by allauth
+                'django.template.context_processors.request',  # required by allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -220,6 +220,11 @@ TEMPLATES = [
 - git commit -m " added home app and templates"
 - git push
 
+- costumize index.html
+- git add .
+- git commit -m "added home page content"
+- git push
+
 
 
 
@@ -229,3 +234,62 @@ TEMPLATES = [
 
 
 - python3 manage.py runserver
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+e-commerce web application
+complete with product search and filter functionality.
+A live fully functional payment system.
+A full-featured authentication system including email confirmations and user profiles.
+And real-time notifications that guide the user's experience.
+To do this we'll use technologies that are popularly used in modern software development
+Such as Stripe, Amazon Web Services, Heroku, and more.
+This project is not designed to demonstrate general concepts.
+Or leave you with something that looks good but doesn't do much.
+By the time you've completed it you'll have everything you need to solve real-world
+problems as well as build elegant web applications that not only look good and function well.
+But even have the potential to become sustainable revenue-generating busines
