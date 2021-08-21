@@ -155,7 +155,6 @@ def index(request):
 
 - copy urls.py and paste in home folder
 ```
-from django.contrib import admin
 from django.urls import path
 from . import views
 
@@ -410,6 +409,62 @@ admin.site.register(Category, CategoryAdmin)
 
 ```
 - check admin account database
+- git add .
+- git commit -m "customized admin"
+- git push
+
+
+- products/views.py
+```
+from django.shortcuts import render
+from .models import Product
+
+
+def all_products(request):
+    """ A view to show all products, including sorting and search queries """
+
+    products = Product.objects.all()
+
+    context = {
+        'products': products,
+    }
+
+    return render(request, 'products/products.html', context)
+
+```
+- create urls.py in folder products
+```
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.all_products, name='products')
+]
+
+```
+
+- boutique/urls.py
+```
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('', include('home.urls')),
+    path('products/', include('products.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+```
+- mkdir -p products/templates/products
+- create products.html
+- git add .
+- git commit -m "added products views and templates"
+- git push
+
+
 
 
 - python3 manage.py runserver
