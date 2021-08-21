@@ -220,14 +220,20 @@ TEMPLATES = [
 - git commit -m " added home app and templates"
 - git push
 
-- costumize index.html
+
+- costumize home/templates/home/index.html
 - git add .
 - git commit -m "added home page content"
 - git push
 
 
+- update templates/base.html
+- git add .
+- git commit -m "added main page header"
+- git push
 
 
+- create style.css
 
 
 
