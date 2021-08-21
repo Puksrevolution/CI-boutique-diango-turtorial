@@ -267,6 +267,20 @@ urlpatterns = [
 - git commit -m "completed home page header and css"
 - git push
 
+- update templates/base.html
+- mkdir templates/includes
+- create templates/includes/main-nav.html
+- create templates/includes/mobile-top-header.html
+- update base.css
+```
+.bg-black {
+    background: #000 !important;
+}
+```
+- git add .
+- git commit -m "added mobile_header and main navbar"
+- git push
+
 
 
 
