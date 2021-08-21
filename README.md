@@ -138,6 +138,91 @@ LOGIN_REDIRECT_URL = '/'
 cp -r ../.pip-modules/lib/python3.7/site-packages/allauth/templates/* ./templates/allauth/
 )
 
+- python3 manage.py startapp home
+- mkdir -p home/templates/home
+- create index.html in home/templates/home folder
+- home/views.py
+```
+def index(request):
+    """ A view to return the index page """
+
+    return render(request, 'home/index.html')
+
+```
+
+- copy urls.py and paste in home folder
+```
+from django.contrib import admin
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='home')
+]
+
+```
+
+- update urls.py in boutique folder
+```
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('', include('home.urls')),
+]
+
+```
+
+- update settings.py
+```
+import os
+
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'home',
+]
+
+
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'templates', 'allauth'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request', # required by allauth
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+```
+- python3 manage.py runserver
+- git add . 
+- git commit -m " added home app and templates"
+- git push
+
+
+
+
 
 
 
