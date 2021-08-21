@@ -136,6 +136,9 @@ LOGIN_REDIRECT_URL = '/'
 
 (didn't work
 cp -r ../.pip-modules/lib/python3.7/site-packages/allauth/templates/* ./templates/allauth/
+
+try
+cp -r ../.pip-modules/lib/python3.8/site-packages/allauth/templates/* ./templates/allauth/
 )
 
 - python3 manage.py startapp home
@@ -281,18 +284,87 @@ urlpatterns = [
 - git commit -m "added mobile_header and main navbar"
 - git push
 
+- add images for products into media folder
+- python3 manage.py startapp products
+- settings.py
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'home',
+    'products',
+]
+```
+- mkdir products/fixtures
+- copy & paste categories.jason and products.jason from [Kaggle](https://www.kaggle.com/)
+- use [Json formatter](https://jsonformatter.org/) to formatt the .json code from [Kaggle](https://www.kaggle.com/)
+- open products/models.py
+```
+from django.db import models
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=254)
+    friendly_name = models.CharField(max_length=254, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_friendly_name(self):
+        return self.friendly_name
+
+
+class Product(models.Model):
+    category = models.ForeignKey('Category', null=True, blank=True, on_delete=models.SET_NULL)
+    sku = models.CharField(max_length=254, null=True, blank=True)
+    name = models.CharField(max_length=254)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    rating = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    image_url = models.URLField(max_length=1024, null=True, blank=True)
+    image = models.ImageField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+```
+- python3 manage.py makemigrations --dry-run
+- pip3 install pillow
+
+- python3 manage.py makemigrations
+- python3 manage.py migrate --plan
+- python3 manage.py migrate
+
+- products/admin.py
+```
+from django.contrib import admin
+from .models import Product, Category
+
+
+# Register your models here.
+admin.site.register(Product)
+admin.site.register(Category)
+```
+- python3 manage.py loaddata categories
+- python3 manage.py loaddata products
+- python3 manage.py runserver
+  - open admin in 8000 browser
+    - check if all products loaded properly
+- git add .
+- git commit -m "added products app, models and fixtures"
+- git push
 
 
 
 - python3 manage.py runserver
-
-
-
-
-
-
 
 
 
