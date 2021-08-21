@@ -363,6 +363,54 @@ admin.site.register(Category)
 - git push
 
 
+- update database, fixing typos
+  - products/models.py
+```
+class Category(models.Model):
+
+    class Meta:
+        verbose_name_plural = 'Categories'
+        
+    name = models.CharField(max_length=254)
+    friendly_name = models.CharField(max_length=254, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    def get_friendly_name(self):
+        return self.friendly_name
+```
+  - products/admin.py
+```
+from django.contrib import admin
+from .models import Product, Category
+
+
+class ProductAdmin(admin.ModelAdmin):
+    list_display = (
+        'sku',
+        'name',
+        'category',
+        'price',
+        'rating',
+        'image',
+    )
+
+    ordering = ('sku',)
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = (
+        'friendly_name',
+        'name',
+    )
+
+admin.site.register(Product, ProductAdmin)
+admin.site.register(Category, CategoryAdmin)
+
+```
+- check admin account database
+
 
 - python3 manage.py runserver
 
