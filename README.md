@@ -233,7 +233,40 @@ TEMPLATES = [
 - git push
 
 
-- create style.css
+- mkdir static
+- mkdir media
+- mkdir static/css
+- create base.css file in static/css
+
+- add your own fontawesome.kit.js to templates/base.html
+- settings.py
+```
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+```
+- boutique/urls.py
+```
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('', include('home.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+- git add .
+- git commit -m "completed home page header and css"
+- git push
+
 
 
 
