@@ -465,7 +465,10 @@ urlpatterns = [
 - git push
 
 
-
+- costumize products.html
+- git add .
+- git commit -m "started product template"
+- git push
 
 - python3 manage.py runserver
 
