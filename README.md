@@ -1023,62 +1023,93 @@ STANDARD_DELIVERY_PERCENTAGE = 10
 - git push
 
 
-
-
-
-
-
-
-- products/views.py
+- bag/views.py
 ```
-from django.shortcuts import render, redirect, reverse, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.db.models.functions import Lower
+from django.shortcuts import render, redirect
 
-from .models import Product, Category
-from .forms import ProductForm
+
+def add_to_bag(request, item_id):
+    """ Add a quantity of the specified product to the shopping bag """
+
+    quantity = int(request.POST.get('quantity'))
+    redirect_url = request.POST.get('redirect_url')
+    bag = request.session.get('bag', {})
+
+    if item_id in list(bag.keys()):
+        bag[item_id] += quantity
+    else:
+        bag[item_id] = quantity
+
+    request.session['bag'] = bag
+    print(request.session['bag'])
+    return redirect(redirect_url)
+
 ```
+- bag/urls.py
+```
+urlpatterns = [
+    path('', views.view_bag, name='view_bag'),
+    path('add/<item_id>/', views.add_to_bag, name='add_to_bag'),
+]
+```
+- products/templates/product_detail.html
+```
+<form class="form" action="{% url 'add_to_bag' product.id %}" method="POST">
+    {% csrf_token %}
+    <div class="form-row">
+        <div class="col-12">
+            <p class="mt-3"><strong>Quantity:</strong></p>
+            <div class="form-group w-50">
+                <div class="input-group">
+                    <input class="form-control qty_input" type="number" name="quantity" value="1" min="1" max="99" data-item_id="{{ product.id }}" id="id_qty_{{ product.id }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <a href="{% url 'products' %}" class="btn btn-outline-black rounded-0 mt-5">
+                <span class="icon">
+                    <i class="fas fa-chevron-left"></i>
+                </span>
+                <span class="text-uppercase">Keep Shopping</span>
+            </a>
+            <input type="submit" class="btn btn-black rounded-0 text-uppercase mt-5" value="Add to Bag">
+        </div>
+        <input type="hidden" name="redirect_url" value="{{ request.path }}">
+    </div>
+</form>
+```
+- static/css/base.css
+```
+.btn-outline-black {
+    background: white;
+    color: black !important; /* use important to override link colors for <a> elements */
+    border: 1px solid black;
+}
+
+.btn-outline-black:hover,
+.btn-outline-black:active,
+.btn-outline-black:focus {
+    background: black;
+    color: white !important;
+}
+```
+- git add . 
+- git commit -m "added add to bag functionality"
+- git push
 
 
 
+
+
+
+
+- git add . 
+- git commit -m "added add to bag functionality"
+- git push
 
 
 - python3 manage.py runserver
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
