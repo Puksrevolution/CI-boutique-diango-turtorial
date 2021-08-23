@@ -470,6 +470,256 @@ urlpatterns = [
 - git commit -m "started product template"
 - git push
 
+- update index.html / home page button link
+```
+<a href="{% url 'products' %}" class="shop-now-button btn btn-lg rounded-0 text-uppercase py-3">Shop Now</a>
+```
+- update templates/includes/main-nav.html nav link
+```
+<a href="{% url 'products' %}" class="dropdown-item">All Products</a>
+```
+- update products/views.py
+```
+from django.shortcuts import render, get_object_or_404
+
+
+def product_detail(request, product_id):
+    """ A view to show individual product details """
+
+    product = get_object_or_404(Product, pk=product_id)
+
+    context = {
+        'product': product,
+    }
+
+    return render(request, 'products/product_detail.html', context)
+```
+- update products/urls.py
+```
+urlpatterns = [
+    path('', views.all_products, name='products'),
+    path('<product_id>', views.product_detail, name='product_detail'),
+]
+```
+- create product_detail.html
+- update products.html
+```
+{% if product.image %}
+    <a href="{% url 'product_detail' product.id %}">
+        <img class="card-img-top img-fluid" src="{{ product.image.url }}" alt="{{ product.name }}">
+    </a>
+{% else %}
+    <a href="{% url 'product_detail' product.id %}">
+        <img class="card-img-top img-fluid" src="{{ MEDIA_URL }}noimage.png" alt="{{ product.name }}">
+    </a>
+{% endif %}
+```
+- update base.html
+```
+/* pad the top a bit when navbar is collapsed on mobile */
+@media (max-width: 991px) {
+    .header-container {
+        padding-top: 116px;
+    }
+
+    body {
+        height: calc(100vh - 116px);
+    }
+}
+```
+- git add . 
+- git commit - m "added product details functionality"
+- git push
+
+
+- update templates/base.html
+```
+<form method="GET" action="{% url 'products' %}">
+```
+- update templates/includes/mobile-top-header.html
+```
+<form class="form" method="GET" action="{% url 'products' %}">
+```
+- update products/views.py
+```
+from django.shortcuts import render, redirect, reverse, get_object_or_404
+from django.contrib import messages
+from django.db.models import Q
+from .models import Product
+
+
+def all_products(request):
+    """ A view to show all products, including sorting and search queries """
+
+    products = Product.objects.all()
+    query = None
+
+    if request.GET:
+        if 'q' in request.GET:
+            query = request.GET['q']
+            if not query:
+                messages.error(request, "You didn't enter any search criteria!")
+                return redirect(reverse('products'))
+            
+            queries = Q(name__icontains=query) | Q(description__icontains=query)
+            products = products.filter(queries)
+
+    context = {
+        'products': products,
+        'search_term': query,
+    }
+
+    return render(request, 'products/products.html', context)
+
+```
+- git add . 
+- git commit - m "added search functionality"
+- git push
+
+
+- update templates/includes/main-nav.html nav link
+```
+<li class="nav-item dropdown">
+    <a class="logo-font font-weight-bold nav-link text-black mr-5" href="#" id="clothing-link" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Clothing
+    </a>
+    <div class="dropdown-menu border-0" aria-labelledby="clothing-link">
+        <a href="{% url 'products' %}?category=activewear,essentials" class="dropdown-item">Activewear &amp; Essentials</a>
+        <a href="{% url 'products' %}?category=jeans" class="dropdown-item">Jeans</a>
+        <a href="{% url 'products' %}?category=shirts" class="dropdown-item">Shirts</a>
+        <a href="{% url 'products' %}?category=activewear,essentials,jeans,shirts" class="dropdown-item">All Clothing</a>
+    </div>
+</li>
+
+<li class="nav-item dropdown">
+    <a class="logo-font font-weight-bold nav-link text-black mr-5" href="#" id="homeware-link" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Homeware
+    </a>
+    <div class="dropdown-menu border-0" aria-labelledby="homeware-link">
+        <a href="{% url 'products' %}?category=bed_bath" class="dropdown-item">Bed &amp; Bath</a>
+        <a href="{% url 'products' %}?category=kitchen_dining" class="dropdown-item">Kitchen &amp; Dining</a>
+        <a href="{% url 'products' %}?category=bed_bath,kitchen_dining" class="dropdown-item">All Homeware</a>
+    </div>
+</li>
+
+<li class="nav-item dropdown">
+    <a class="logo-font font-weight-bold nav-link text-black" href="#" id="specials-link" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Special Offers
+    </a>
+    <div class="dropdown-menu border-0" aria-labelledby="specials-link">
+        <a href="{% url 'products' %}?category=new_arrivals" class="dropdown-item">New Arrivals</a>
+        <a href="{% url 'products' %}?category=deals" class="dropdown-item">Deals</a>
+        <a href="{% url 'products' %}?category=clearance" class="dropdown-item">Clearance</a>
+        <a href="{% url 'products' %}?category=new_arrivals,deals,clearance" class="dropdown-item">All Specials</a>
+    </div>
+</li>
+```
+- update products/views.py
+```
+from .models import Product, Category
+
+
+def all_products(request):
+    """ A view to show all products, including sorting and search queries """
+
+    products = Product.objects.all()
+    query = None
+    categories = None
+
+    if request.GET:
+        if 'category' in request.GET:
+            categories = request.GET['category'].split(',')
+            products = products.filter(category__name__in=categories)
+            categories = Category.objects.filter(name__in=categories)
+
+        if 'q' in request.GET:
+            query = request.GET['q']
+            if not query:
+                messages.error(request, "You didn't enter any search criteria!")
+                return redirect(reverse('products'))
+            
+            queries = Q(name__icontains=query) | Q(description__icontains=query)
+            products = products.filter(queries)
+
+    context = {
+        'products': products,
+        'search_term': query,
+        'current_categories': categories,
+    }
+
+    return render(request, 'products/products.html', context)
+
+```
+- git add . 
+- git commit - m "added category filtering"
+- git push
+
+
+- update templates/includes/main-nav.html nav link
+```
+<div class="dropdown-menu border-0" aria-labelledby="all-products-link">
+    <a href="{% url 'products' %}?sort=price&direction=asc" class="dropdown-item">By Price</a>
+    <a href="{% url 'products' %}?sort=rating&direction=desc" class="dropdown-item ">By Rating</a>
+    <a href="{% url 'products' %}?sort=category&direction=asc" class="dropdown-item ">By Category</a>
+    <a href="{% url 'products' %}" class="dropdown-item">All Products</a>
+</div>
+```
+- update products/views.py
+```
+def all_products(request):
+    """ A view to show all products, including sorting and search queries """
+
+    products = Product.objects.all()
+    query = None
+    categories = None
+    sort = None
+    direction = None
+
+    if request.GET:
+        if 'sort' in request.GET:
+            sortkey = request.GET['sort']
+            sort = sortkey
+            if sortkey == 'name':
+                sortkey = 'lower_name'
+                products = products.annotate(lower_name=Lower('name'))
+
+            if 'direction' in request.GET:
+                direction = request.GET['direction']
+                if direction == 'desc':
+                    sortkey = f'-{sortkey}'
+            products = products.order_by(sortkey)
+            
+        if 'category' in request.GET:
+            categories = request.GET['category'].split(',')
+            products = products.filter(category__name__in=categories)
+            categories = Category.objects.filter(name__in=categories)
+
+        if 'q' in request.GET:
+            query = request.GET['q']
+            if not query:
+                messages.error(request, "You didn't enter any search criteria!")
+                return redirect(reverse('products'))
+            
+            queries = Q(name__icontains=query) | Q(description__icontains=query)
+            products = products.filter(queries)
+
+    current_sorting = f'{sort}_{direction}'
+
+    context = {
+        'products': products,
+        'search_term': query,
+        'current_categories': categories,
+        'current_sorting': current_sorting,
+    }
+
+    return render(request, 'products/products.html', context)
+```
+    
+
+
+
+
+
 - python3 manage.py runserver
 
 
