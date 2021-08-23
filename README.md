@@ -915,15 +915,112 @@ INSTALLED_APPS = [
     'bag',
 ]
 ```
-
-
 - git add . 
 - git commit -m "Added shopping bag app, urls and template"
 - git push
 
 
+- creat bag/contexts.py
+```
+from decimal import Decimal
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from products.models import Product
 
 
+def bag_contents(request):
+
+    bag_items = []
+    total = 0
+    product_count = 0
+    bag = request.session.get('bag', {})
+
+    for item_id, item_data in bag.items():
+        if isinstance(item_data, int):
+            product = get_object_or_404(Product, pk=item_id)
+            total += item_data * product.price
+            product_count += item_data
+            bag_items.append({
+                'item_id': item_id,
+                'quantity': item_data,
+                'product': product,
+            })
+        else:
+            product = get_object_or_404(Product, pk=item_id)
+            for size, quantity in item_data['items_by_size'].items():
+                total += quantity * product.price
+                product_count += quantity
+                bag_items.append({
+                    'item_id': item_id,
+                    'quantity': quantity,
+                    'product': product,
+                    'size': size,
+                })
+
+    if total < settings.FREE_DELIVERY_THRESHOLD:
+        delivery = total * Decimal(settings.STANDARD_DELIVERY_PERCENTAGE / 100)
+        free_delivery_delta = settings.FREE_DELIVERY_THRESHOLD - total
+    else:
+        delivery = 0
+        free_delivery_delta = 0
+
+    grand_total = delivery + total
+
+    context = {
+        'bag_items': bag_items,
+        'total': total,
+        'product_count': product_count,
+        'delivery': delivery,
+        'free_delivery_delta': free_delivery_delta,
+        'free_delivery_threshold': settings.FREE_DELIVERY_THRESHOLD,
+        'grand_total': grand_total,
+    }
+
+    return context
+
+```
+- boutique/settings.py
+```
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'templates', 'allauth'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request', # required by allauth
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'bag.contexts.bag_contents',
+            ],
+        },
+    },
+]
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+FREE_DELIVERY_THRESHOLD = 50
+STANDARD_DELIVERY_PERCENTAGE = 10
+```
+- templates/base.html
+```
+<h4 class="logo-font my-1">Free delivery on orders over ${{ free_delivery_threshold }}!</h4>
+```
+- git add . 
+- git commit -m "Added bag context and delivery logic"
+- git push
 
 
 
