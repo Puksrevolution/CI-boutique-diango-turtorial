@@ -1099,13 +1099,9 @@ urlpatterns = [
 - git push
 
 
-
-
-
-
-
+- update bag/templates/bag/bag.html
 - git add . 
-- git commit -m "added add to bag functionality"
+- git commit -m "updated shopping bag template"
 - git push
 
 
