@@ -283,6 +283,7 @@ urlpatterns = [
 - git commit -m "added mobile_header and main navbar"
 - git push
 
+
 - add images for products into media folder
 - python3 manage.py startapp products
 - settings.py
@@ -337,11 +338,9 @@ class Product(models.Model):
 ```
 - python3 manage.py makemigrations --dry-run
 - pip3 install pillow
-
 - python3 manage.py makemigrations
 - python3 manage.py migrate --plan
 - python3 manage.py migrate
-
 - products/admin.py
 ```
 from django.contrib import admin
@@ -442,7 +441,6 @@ urlpatterns = [
 ]
 
 ```
-
 - boutique/urls.py
 ```
 from django.contrib import admin
@@ -469,6 +467,7 @@ urlpatterns = [
 - git add .
 - git commit -m "started product template"
 - git push
+
 
 - update index.html / home page button link
 ```
@@ -849,6 +848,80 @@ a.category-badge > span.badge:hover {
 - git add . 
 - git commit -m "Added sorting JS and back to top link"
 - git push
+
+
+- python3 manage.py startapp bag
+- bag/view.py
+```
+from django.shortcuts import render
+
+
+def view_bag(request):
+    """ A view that renders the bag contents page """
+
+    return render(request, 'bag/bag.html')
+
+```
+- create bag/templates/bag/bag.html
+- create bag/urls.py
+```
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.view_bag, name='view_bag')
+]
+
+```
+- update boutique/urls.py
+```
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('', include('home.urls')),
+    path('products/', include('products.urls')),
+    path('bag/', include('bag.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+```
+- update templates/base.html
+```
+<a class="{% if grand_total %}text-info font-weight-bold{% else %}text-black{% endif %} nav-link" href="{% url 'view_bag' %}">
+```
+- update templates/includes/mobile-top-header.html
+```
+<a class="{% if grand_total %}text-primary font-weight-bold{% else %}text-black{% endif %} nav-link d-block d-lg-none" href="{% url 'view_bag' %}">
+```
+- boutique/settings.py
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'home',
+    'products',
+    'bag',
+]
+```
+
+
+- git add . 
+- git commit -m "Added shopping bag app, urls and template"
+- git push
+
+
 
 
 
