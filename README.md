@@ -1105,6 +1105,42 @@ urlpatterns = [
 - git push
 
 
+- update products/models.py
+```
+class Product(models.Model):
+    category = models.ForeignKey('Category', null=True, blank=True, on_delete=models.SET_NULL)
+    sku = models.CharField(max_length=254, null=True, blank=True)
+    name = models.CharField(max_length=254)
+    description = models.TextField()
+    has_sizes = models.BooleanField(default=False, null=True, blank=True)
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    rating = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    image_url = models.URLField(max_length=1024, null=True, blank=True)
+    image = models.ImageField(null=True, blank=True)
+```
+- python3 manage.py makemigrations --dry-run
+- python3 manage.py makemigrations
+- python3 manage.py migrate --plan
+- python3 manage.py migrate
+- python3 manage.py shell
+  In Terminal
+    - from products.models import Product
+    - kdbb = ['kitchen_dining', 'bed_bath']
+    - clothes = Product.objects.exclude(category__name__in=kdbb)
+    - clothes.count()
+    - for item in clothes:
+        item.has_sizes = True
+        item.save()
+    - Product.objects.filter(has_sizes=True)
+    - Product.objects.filter(has_sizes=True).count()
+    - exit()
+
+- update products/product_detail.html
+- update bag/templates/bag/bag.html
+- git add . 
+- git commit -m "added sizes to product model and size selctor box to product template"
+- git push
+
 - python3 manage.py runserver
 
 
