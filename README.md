@@ -666,6 +666,14 @@ def all_products(request):
 ```
 - update products/views.py
 ```
+from django.shortcuts import render, redirect, reverse, get_object_or_404
+from django.contrib import messages
+from django.db.models import Q
+from django.db.models.functions import Lower
+
+from .models import Product, Category
+
+
 def all_products(request):
     """ A view to show all products, including sorting and search queries """
 
@@ -723,14 +731,6 @@ def all_products(request):
 - update products/temlates/product_detail.html
 - products/views.py
 ```
-from django.shortcuts import render, redirect, reverse, get_object_or_404
-from django.contrib import messages
-from django.db.models import Q
-from django.db.models.functions import Lower
-
-from .models import Product, Category
-
-
 def all_products(request):
     """ A view to show all products, including sorting and search queries """
 
@@ -782,11 +782,73 @@ def all_products(request):
     return render(request, 'products/products.html', context)
 ```
 - git add . 
-- git commit -m "added sorting"
+- git commit -m "added sorting and product counts to product page"
 - git push
 
 
+- products/templates/products.html
+```
+    <div class="btt-button shadow-sm rounded-0 border border-black">
+        <a class="btt-link d-flex h-100">
+            <i class="fas fa-arrow-up text-black mx-auto my-auto"></i>
+        </a>	
+    </div>
+{% endblock %}
 
+{% block postloadjs %}
+    {{ block.super }}
+    <script type="text/javascript">
+		$('.btt-link').click(function(e) {
+			window.scrollTo(0,0)
+		})
+	</script>
+    
+    <script type="text/javascript">
+        $('#sort-selector').change(function() {
+            var selector = $(this);
+            var currentUrl = new URL(window.location);
+
+            var selectedVal = selector.val();
+            if(selectedVal != "reset"){
+                var sort = selectedVal.split("_")[0];
+                var direction = selectedVal.split("_")[1];
+
+                currentUrl.searchParams.set("sort", sort);
+                currentUrl.searchParams.set("direction", direction);
+
+                window.location.replace(currentUrl);
+            } else {
+                currentUrl.searchParams.delete("sort");
+                currentUrl.searchParams.delete("direction");
+
+                window.location.replace(currentUrl);
+            }
+        })
+    </script>
+{% endblock %}
+```
+- static/css/base.css
+```
+a.category-badge > span.badge:hover {
+    background: #212529 !important;
+    color: #fff !important;
+}
+
+.btt-button {
+    height: 42px;
+    width: 42px;
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+}
+
+.btt-link {
+    cursor: pointer;
+}
+```
+- git add . 
+- git commit -m "Added sorting JS and back to top link"
+- git push
 
 
 
