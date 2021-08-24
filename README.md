@@ -1254,9 +1254,23 @@ def bag_contents(request):
 - git push
 
 
+- update products/templates/products/product_detail.html
+- create products/templates/products/includes/quantity_input_script.html
+- git add . 
+- git commit -m "Added quantity input +/- buttons"
+- git push
 
 
 
+
+
+
+
+
+
+- git add . 
+- git commit -m "Added quantity input +/- buttons"
+- git push
 
 - python3 manage.py runserver
 
