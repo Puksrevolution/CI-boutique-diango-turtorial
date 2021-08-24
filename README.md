@@ -1545,6 +1545,13 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 - git push
 
 
+- update bag/views.py
+- update static/css/base.css
+- update templates/includes/toasts/toast_success.html
+- git add . 
+- git commit -m "Added notification Css, shopping bag preview, and additional messages"
+- git push
+
 
 
 
@@ -1555,7 +1562,7 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 
 - git add . 
-- git commit -m "Added toasts"
+- git commit -m "Added notification Css, shopping bag preview, and additional messages"
 - git push
 - python3 manage.py runserver
 
