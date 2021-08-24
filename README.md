@@ -1141,6 +1141,123 @@ class Product(models.Model):
 - git commit -m "added sizes to product model and size selctor box to product template"
 - git push
 
+
+- open admin account in browser
+  - products list
+  - sort by name
+  - set Has sizes: No
+- update bag/views.py
+```
+def add_to_bag(request, item_id):
+    """ Add a quantity of the specified product to the shopping bag """
+
+    quantity = int(request.POST.get('quantity'))
+    redirect_url = request.POST.get('redirect_url')
+    size = None
+    if 'product_size' in request.POST:
+        size = request.POST['product_size']
+    bag = request.session.get('bag', {})
+
+    if size:
+        if item_id in list(bag.keys()):
+            if size in bag[item_id]['items_by_size'].keys():
+                bag[item_id]['items_by_size'][size] += quantity
+            else:
+                bag[item_id]['items_by_size'][size] = quantity
+        else:
+            bag[item_id] = {'items_by_size': {size: quantity}}
+    else:
+        if item_id in list(bag.keys()):
+            bag[item_id] += quantity
+        else:
+            bag[item_id] = quantity
+
+    request.session['bag'] = bag
+    return redirect(redirect_url)
+```
+- update bag/contexts.py
+```
+def bag_contents(request):
+
+    bag_items = []
+    total = 0
+    product_count = 0
+    bag = request.session.get('bag', {})
+
+    for item_id, item_data in bag.items():
+        if isinstance(item_data, int):
+            product = get_object_or_404(Product, pk=item_id)
+            total += item_data * product.price
+            product_count += item_data
+            bag_items.append({
+                'item_id': item_id,
+                'quantity': item_data,
+                'product': product,
+            })
+        else:
+            product = get_object_or_404(Product, pk=item_id)
+            for size, quantity in item_data['items_by_size'].items():
+                total += quantity * product.price
+                product_count += quantity
+                bag_items.append({
+                    'item_id': item_id,
+                    'quantity': item_data,
+                    'product': product,
+                    'size': size,
+                })
+
+    if total < settings.FREE_DELIVERY_THRESHOLD:
+        delivery = total * Decimal(settings.STANDARD_DELIVERY_PERCENTAGE / 100)
+        free_delivery_delta = settings.FREE_DELIVERY_THRESHOLD - total
+    else:
+        delivery = 0
+        free_delivery_delta = 0
+    
+    grand_total = delivery + total
+    
+    context = {
+        'bag_items': bag_items,
+        'total': total,
+        'product_count': product_count,
+        'delivery': delivery,
+        'free_delivery_delta': free_delivery_delta,
+        'free_delivery_threshold': settings.FREE_DELIVERY_THRESHOLD,
+        'grand_total': grand_total,
+    }
+
+    return context
+
+```
+- for testing the code for shopping bag bag/templates/bag/bag.html
+```
+<div class="row">
+    <div class="col">
+        {% if bag_items %}
+            {{ bag_items }}
+            <br>
+            <br>
+            {{ request.session.bag }}
+            <div class="table-responsive rounded">
+                <table class="table table-sm table-borderless">
+                    <thead class="text-black">
+                        <tr>
+                            <th scope="col">Product Info</th>
+                            <th scope="col"></th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Qty</th>
+                            <th scope="col">Subtotal</th>
+                        </tr>
+                    </thead>
+```
+- git add . 
+- git commit -m "Finished product size logic"
+- git push
+
+
+
+
+
+
 - python3 manage.py runserver
 
 
