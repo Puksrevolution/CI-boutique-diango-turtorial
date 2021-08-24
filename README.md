@@ -1770,10 +1770,110 @@ class OrderForm(forms.ModelForm):
             self.fields[field].label = False
 
 ```
+- git add . 
+- git commit -m "created checkout app and models"
+- git push
 
 
+- checkout/views.py
+```
+from django.shortcuts import render, redirect, reverse
+from django.contrib import messages
+
+from .forms import OrderForm
 
 
+def checkout(request):
+    bag = request.session.get('bag', {})
+    if not bag:
+        messages.error(request, "There's nothing in your bag at the moment")
+        return redirect(reverse('products'))
+
+    order_form = OrderForm()
+    template = 'checkout/checkout.html'
+    context = {
+        'order_form': order_form,
+    }
+
+    return render(request, template, context)
+
+```
+- create checkout/urls.py
+```
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.checkout, name='checkout')
+]
+
+```
+- update boutique/urls.py
+```
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('', include('home.urls')),
+    path('products/', include('products.urls')),
+    path('bag/', include('bag.urls')),
+    path('checkout/', include('checkout.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+```
+- create checkout/templates/checkout/checkout.html
+- create checkout/static/checkout/css/checkout.css
+- pip3 install django-crispy-forms
+- update boutique/settings.py
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'home',
+    'products',
+    'bag',
+    'checkout',
+
+    # Other
+    'crispy_forms',
+]
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'templates', 'allauth'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request', # required by allauth
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
+                'bag.contexts.bag_contents',
+            ],
+            'builtins': [
+                'crispy_forms.templatetags.crispy_forms_tags',
+                'crispy_forms.templatetags.crispy_forms_field',
+            ]
+        },
+    },
+]
+```
+- pip3 freeze --local > requirements.txt
+- update bag/templates/bag/bag.html
 
 
 
