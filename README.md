@@ -1874,11 +1874,47 @@ TEMPLATES = [
 ```
 - pip3 freeze --local > requirements.txt
 - update bag/templates/bag/bag.html
+- git add . 
+- git commit -m "added checkout views and templates"
+- git push
+
+
+- update checkout/static/checkout/css/checkout.css
+- create checkout/static/checkout/js/stripe_elements.js 
+- update templates/base.html
+- update checkout/templates/checkout/checkout.html
+- checkout/views.py
+  - Publishable key from Stipe.com is needed
+```
+def checkout(request):
+    bag = request.session.get('bag', {})
+    if not bag:
+        messages.error(request, "There's nothing in your bag at the moment")
+        return redirect(reverse('products'))
+
+    order_form = OrderForm()
+    template = 'checkout/checkout.html'
+    context = {
+        'order_form': order_form,
+        'stripe_public_key': 'pk_test_51JSkAYFIHH8nktjFncXVV4ZrVSHrZx6NVqZeFmWmDmajpnKB4fjWYa3GzNGXy2TaXhVk6tGHMuHcIfwE1j4enZQA00wOBkNusP',
+        'client_secret': 'test client secret',
+    }
+
+    return render(request, template, context)
+
+```
+- git add . 
+- git commit -m "added stripe elements"
+- git push
+
+
+
+
 
 
 
 - git add . 
-- git commit -m "created checkout app and models"
+- git commit -m "added stripe elements"
 - git push
 - python3 manage.py runserver
 
