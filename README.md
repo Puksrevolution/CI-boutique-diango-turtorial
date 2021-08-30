@@ -1879,13 +1879,373 @@ TEMPLATES = [
 - git push
 
 
-- update checkout/static/checkout/css/checkout.css
-- create checkout/static/checkout/js/stripe_elements.js 
-- update templates/base.html
-- update checkout/templates/checkout/checkout.html
-- checkout/views.py
-  - Publishable key from Stipe.com is needed
+### Stripe Part 1
+
+checkout/static/checkout/css/checkout.css
 ```
+.StripeElement,
+.stripe-style-input {
+  box-sizing: border-box;
+  height: 40px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 0px;
+  background-color: white;
+  box-shadow: 0 1px 3px 0 #e6ebf1;
+  -webkit-transition: box-shadow 150ms ease;
+  transition: box-shadow 150ms ease;
+}
+
+.StripeElement--focus,
+.stripe-style-input:focus,
+.stripe-style-input:active {
+  box-shadow: 0 1px 3px 0 #cfd7df;
+}
+
+.StripeElement--webkit-autofill {
+  background-color: #fefde5 !important;
+}
+
+.stripe-style-input::placeholder {
+  color: #aab7c4;
+}
+
+.fieldset-label {
+  position: relative;
+  right: .5rem;
+}
+
+#payment-form .form-control,
+#card-element {
+  color: #000;
+  border: 1px solid #000;
+}
+```
+### Stripe Part 2
+
+templates/base.html
+```
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+
+    {% block meta %}
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {% endblock %}
+
+    {% block extra_meta %}
+    {% endblock %}
+
+    {% block corecss %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato&display=swap">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    {% endblock %}
+
+    {% block extra_css %}
+    {% endblock %}
+
+    {% block corejs %}
+    <script src="https://kit.fontawesome.com/e9c73d7092.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+    </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous">
+    </script>
+    <!-- Stripe -->
+    <script src="https://js.stripe.com/v3/"></script>
+    {% endblock %}
+
+    {% block extra_js %}
+    {% endblock %}
+
+    <title>Boutique Ado {% block extra_title %}{% endblock %}</title>
+</head>
+
+<body>
+    <header class="container-fluid fixed-top">
+        <div id="topnav" class="row bg-white pt-lg-2 d-none d-lg-flex">
+            <div class="col-12 col-lg-4 my-auto py-1 py-lg-0 text-center text-lg-left">
+                <a href="{% url 'home' %}" class="nav-link main-logo-link">
+                    <h2 class="logo-font text-black my-0"><strong>Boutique</strong> Ado</h2>
+                </a>
+            </div>
+            <div class="col-12 col-lg-4 my-auto py-1 py-lg-0">
+                <form method="GET" action="{% url 'products' %}">
+                    <div class="input-group w-100">
+                        <input class="form-control border border-black rounded-0" type="text" name="q"
+                            placeholder="Search our site">
+                        <div class="input-group-append">
+                            <button class="form-control btn btn-black border border-black rounded-0" type="submit">
+                                <span class="icon">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12 col-lg-4 my-auto py-1 py-lg-0">
+                <ul class="list-inline list-unstyled text-center text-lg-right my-0">
+                    <li class="list-inline-item dropdown">
+                        <a class="text-black nav-link" href="#" id="user-options" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <div class="text-center">
+                                <div><i class="fas fa-user fa-lg"></i></div>
+                                <p class="my-0">My Account</p>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu border-0" aria-labelledby="user-options">
+                            {% if request.user.is_authenticated %}
+                            {% if request.user.is_superuser %}
+                            <a href="" class="dropdown-item">Product Management</a>
+                            {% endif %}
+                            <a href="" class="dropdown-item">My Profile</a>
+                            <a href="{% url 'account_logout' %}" class="dropdown-item">Logout</a>
+                            {% else %}
+                            <a href="{% url 'account_signup' %}" class="dropdown-item">Register</a>
+                            <a href="{% url 'account_login' %}" class="dropdown-item">Login</a>
+                            {% endif %}
+                        </div>
+                    </li>
+                    <li class="list-inline-item">
+                        <a class="{% if grand_total %}text-info font-weight-bold{% else %}text-black{% endif %} nav-link"
+                            href="{% url 'view_bag' %}">
+                            <div class="text-center">
+                                <div><i class="fas fa-shopping-bag fa-lg"></i></div>
+                                <p class="my-0">
+                                    {% if grand_total %}
+                                    ${{ grand_total|floatformat:2 }}
+                                    {% else %}
+                                    $0.00
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="row bg-white">
+            <nav class="navbar navbar-expand-lg navbar-light w-100">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#main-nav"
+                    aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                {% include 'includes/mobile-top-header.html' %}
+                {% include 'includes/main-nav.html' %}
+            </nav>
+        </div>
+        <div id="delivery-banner" class="row text-center">
+            <div class="col bg-black text-white">
+                <h4 class="logo-font my-1">Free delivery on orders over ${{ free_delivery_threshold }}!</h4>
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="message-container">
+        {% for message in messages %}
+        {% with message.level as level %}
+        {% if level == 40 %}
+        {% include 'includes/toasts/toast_error.html' %}
+        {% elif level == 30 %}
+        {% include 'includes/toasts/toast_warning.html' %}
+        {% elif level == 25 %}
+        {% include 'includes/toasts/toast_success.html' %}
+        {% else %}
+        {% include 'includes/toasts/toast_info.html' %}
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% block page_header %}
+    {% endblock %}
+
+    {% block content %}
+    {% endblock %}
+
+    {% block postloadjs %}
+    <script type="text/javascript">
+        $('.toast').toast('show');
+    </script>
+    {% endblock %}
+
+
+</body>
+
+</html>
+```
+
+
+checkout/templates/checkout/checkout.html
+```
+{% extends "base.html" %}
+{% load static %}
+{% load bag_tools %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'checkout/css/checkout.css' %}">
+{% endblock %}
+
+{% block page_header %}
+    <div class="container header-container">
+        <div class="row">
+            <div class="col"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <hr>
+                <h2 class="logo-font mb-4">Checkout</h2>
+                <hr>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 col-lg-6 order-lg-last mb-5">
+                <p class="text-muted">Order Summary ({{ product_count }})</p>
+                <div class="row">
+                    <div class="col-7 offset-2">
+                        <p class="mb-1 mt-0 small text-muted">Item</p>
+                    </div>
+                    <div class="col-3 text-right">
+                        <p class="mb-1 mt-0 small text-muted">Subtotal</p>
+                    </div>
+                </div>
+                {% for item in bag_items %}
+                    <div class="row">
+                        <div class="col-2 mb-1">
+                            <a href="{% url 'product_detail' item.product.id %}">
+                                {% if item.product.image %}
+                                    <img class="w-100" src="{{ item.product.image.url }}" alt="{{ product.name }}">
+                                {% else %}
+                                    <img class="w-100" src="{{ MEDIA_URL }}noimage.png" alt="{{ product.name }}">
+                                {% endif %}
+                            </a>
+                        </div>
+                        <div class="col-7">
+                            <p class="my-0"><strong>{{ item.product.name }}</strong></p>
+                            <p class="my-0 small">Size: {% if item.product.has_sizes %}{{ item.size|upper }}{% else %}N/A{% endif %}</p>
+                            <p class="my-0 small text-muted">Qty: {{ item.quantity }}</p>
+                        </div>
+                        <div class="col-3 text-right">
+                            <p class="my-0 small text-muted">${{ item.product.price | calc_subtotal:item.quantity }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                <hr class="my-0">
+                <div class="row text-black text-right">
+                    <div class="col-7 offset-2">
+                        <p class="my-0">Order Total:</p>
+                        <p class="my-0">Delivery:</p>
+                        <p class="my-0">Grand Total:</p>
+                    </div>
+                    <div class="col-3">
+                        <p class="my-0">${{ total | floatformat:2 }}</p>
+                        <p class="my-0">${{ delivery | floatformat:2 }}</p>
+                        <p class="my-0"><strong>${{ grand_total | floatformat:2 }}</strong></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <p class="text-muted">Please fill out the form below to complete your order</p>
+                <form action="{% url 'checkout' %}" method="POST" id="payment-form">
+                    {% csrf_token %}
+                    <fieldset class="rounded px-3 mb-5">
+                        <legend class="fieldset-label small text-black px-2 w-auto">Details</legend>
+                        {{ order_form.full_name | as_crispy_field }}
+                        {{ order_form.email | as_crispy_field }}
+                    </fieldset>
+                    <fieldset class="rounded px-3 mb-5">
+                        <legend class="fieldset-label small text-black px-2 w-auto">Delivery</legend>
+                        {{ order_form.phone_number | as_crispy_field }}
+                        {{ order_form.country | as_crispy_field }}
+                        {{ order_form.postcode | as_crispy_field }}
+                        {{ order_form.town_or_city | as_crispy_field }}
+                        {{ order_form.street_address1 | as_crispy_field }}
+                        {{ order_form.street_address2 | as_crispy_field }}
+                        {{ order_form.county | as_crispy_field }}
+                        <div class="form-check form-check-inline float-right mr-0">
+							{% if user.is_authenticated %}
+								<label class="form-check-label" for="id-save-info">Save this delivery information to my profile</label>
+                                <input class="form-check-input ml-2 mr-0" type="checkbox" id="id-save-info" name="save-info" checked>
+							{% else %}
+								<label class="form-check-label" for="id-save-info">
+                                    <a class="text-info" href="{% url 'account_signup' %}">Create an account</a> or 
+                                    <a class="text-info" href="{% url 'account_login' %}">login</a> to save this information
+                                </label>
+							{% endif %}
+						</div>
+                    </fieldset>
+                    <fieldset class="px-3">
+                        <legend class="fieldset-label small text-black px-2 w-auto">Payment</legend>
+                        <!-- A Stripe card element will go here -->
+                        <div class="mb-3" id="card-element"></div>
+
+                        <!-- Used to display form errors -->
+                        <div class="mb-3 text-danger" id="card-errors" role="alert"></div>
+                    </fieldset>
+
+                    <div class="submit-button text-right mt-5 mb-2">                    
+						<a href="{% url 'view_bag' %}" class="btn btn-outline-black rounded-0">
+							<span class="icon">
+								<i class="fas fa-chevron-left"></i>
+							</span>
+							<span class="font-weight-bold">Adjust Bag</span>
+						</a>
+						<button id="submit-button" class="btn btn-black rounded-0">
+							<span class="font-weight-bold">Complete Order</span>
+							<span class="icon">
+								<i class="fas fa-lock"></i>
+							</span>
+						</button>
+						<p class="small text-danger my-0">
+							<span class="icon">
+								<i class="fas fa-exclamation-circle"></i>
+							</span>
+							<span>Your card will be charged <strong>${{ grand_total|floatformat:2 }}</strong></span>
+						</p>
+					</div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block postloadjs %}
+    {{ block.super }}
+    {{ stripe_public_key|json_script:"id_stripe_public_key" }}
+    {{ client_secret|json_script:"id_client_secret" }}
+    <script src="{% static 'checkout/js/stripe_elements.js' %}"></script>
+{% endblock %}
+```
+
+
+checkout/views.py
+```
+from django.shortcuts import render, redirect, reverse
+from django.contrib import messages
+
+from .forms import OrderForm
+
+
 def checkout(request):
     bag = request.session.get('bag', {})
     if not bag:
@@ -1896,27 +2256,514 @@ def checkout(request):
     template = 'checkout/checkout.html'
     context = {
         'order_form': order_form,
-        'stripe_public_key': 'pk_test_51JSkAYFIHH8nktjFncXVV4ZrVSHrZx6NVqZeFmWmDmajpnKB4fjWYa3GzNGXy2TaXhVk6tGHMuHcIfwE1j4enZQA00wOBkNusP',
+        'stripe_public_key': 'pk_test_0SMREd7Vdweb1MGRi8S0EycR00JVzSAs5O',
         'client_secret': 'test client secret',
     }
 
     return render(request, template, context)
+```
 
+
+checkout/static/checkout/js/stripe_elements.js
+```
+/*
+    Core logic/payment flow for this comes from here:
+    https://stripe.com/docs/payments/accept-a-payment
+    CSS from here: 
+    https://stripe.com/docs/stripe-js
+*/
+
+var stripe_public_key = $('#id_stripe_public_key').text().slice(1, -1);
+var client_secret = $('#id_client_secret').text().slice(1, -1);
+var stripe = Stripe(stripe_public_key);
+var elements = stripe.elements();
+var style = {
+    base: {
+        color: '#000',
+        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+        fontSmoothing: 'antialiased',
+        fontSize: '16px',
+        '::placeholder': {
+            color: '#aab7c4'
+        }
+    },
+    invalid: {
+        color: '#dc3545',
+        iconColor: '#dc3545'
+    }
+};
+var card = elements.create('card', {style: style});
+card.mount('#card-element');
 ```
 - git add . 
 - git commit -m "added stripe elements"
 - git push
 
 
+### Stripe Part 3
+
+checkout/static/checkout/js/stripe_elements.js 
+```
+/*
+    Core logic/payment flow for this comes from here:
+    https://stripe.com/docs/payments/accept-a-payment
+    CSS from here: 
+    https://stripe.com/docs/stripe-js
+*/
+
+var stripePublicKey = $('#id_stripe_public_key').text().slice(1, -1);
+var clientSecret = $('#id_client_secret').text().slice(1, -1);
+var stripe = Stripe(stripePublicKey);
+var elements = stripe.elements();
+var style = {
+    base: {
+        color: '#000',
+        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+        fontSmoothing: 'antialiased',
+        fontSize: '16px',
+        '::placeholder': {
+            color: '#aab7c4'
+        }
+    },
+    invalid: {
+        color: '#dc3545',
+        iconColor: '#dc3545'
+    }
+};
+var card = elements.create('card', {style: style});
+card.mount('#card-element');
+
+// Handle realtime validation errors on the card element
+card.addEventListener('change', function (event) {
+    var errorDiv = document.getElementById('card-errors');
+    if (event.error) {
+        var html = `
+            <span class="icon" role="alert">
+                <i class="fas fa-times"></i>
+            </span>
+            <span>${event.error.message}</span>
+        `;
+        $(errorDiv).html(html);
+    } else {
+        errorDiv.textContent = '';
+    }
+});
+```
+
+checkout/views.py
+```
+from django.shortcuts import render, redirect, reverse
+from django.contrib import messages
+
+from .forms import OrderForm
+from bag.contexts import bag_contents
+
+
+def checkout(request):
+    bag = request.session.get('bag', {})
+    if not bag:
+        messages.error(request, "There's nothing in your bag at the moment")
+        return redirect(reverse('products'))
+
+    current_bag = bag_contents(request)
+    total = current_bag['grand_total']
+    stripe_total = round(total * 100)
+
+    order_form = OrderForm()
+    template = 'checkout/checkout.html'
+    context = {
+        'order_form': order_form,
+        'stripe_public_key': 'pk_test_...',
+        'client_secret': 'test client secret',
+    }
+
+    return render(request, template, context)
+
+```
+
+- pip3 install stripe
+
+boutique/settings.py
+```
+"""
+Django settings for boutique project.
+
+Generated by 'django-admin startproject' using Django 3.2.6.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/3.2/topics/settings/
+
+For the full list of settings and their values, see
+https://docs.djangoproject.com/en/3.2/ref/settings/
+"""
+
+import os
+from pathlib import Path
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-_k=yq7z#2g*rzk@_s75e67f#m$h1u+#1@(g%!^%xitph)_ic%w'
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'home',
+    'products',
+    'bag',
+    'checkout',
+
+    # Other
+    'crispy_forms',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'boutique.urls'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR, 'templates', 'allauth'),
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',  # required by allauth
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
+                'bag.contexts.bag_contents',
+            ],
+            'builtins': [
+                'crispy_forms.templatetags.crispy_forms_tags',
+                'crispy_forms.templatetags.crispy_forms_field',
+            ]
+        },
+    },
+]
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = True
+ACCOUNT_USERNAME_MIN_LENGTH = 4
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+
+WSGI_APPLICATION = 'boutique.wsgi.application'
+
+
+# Database
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+
+# Password validation
+# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+
+# Internationalization
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_L10N = True
+
+USE_TZ = True
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Stripe
+FREE_DELIVERY_THRESHOLD = 50
+STANDARD_DELIVERY_PERCENTAGE = 10
+STRIPE_CURRENCY = 'usd'
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+
+```
+
+- export STRIPE_PUBLIC_KEY=pk_test_51JSkAYFIHH8nktjFncXVV4ZrVSHrZx6NVqZeFmWmDmajpnKB4fjWYa3GzNGXy2TaXhVk6tGHMuHcIfwE1j4enZQA00wOBkNusP
+- set STRIPE_PUBLIC_KEY=pk_test_51JSkAYFIHH8nktjFncXVV4ZrVSHrZx6NVqZeFmWmDmajpnKB4fjWYa3GzNGXy2TaXhVk6tGHMuHcIfwE1j4enZQA00wOBkNusP
+
+- export STRIPE_SECRET_KEY=sk_test_51JSkAYFIHH8nktjFeOgvSGrttNIvUYyGy3gbHM33i24Qw1gLFQuqDhJRTYIg6dY1XywaRabyjgCv59GsEmwstiTf00KD1CdK02
+- set STRIPE_SECRET_KEY=sk_test_51JSkAYFIHH8nktjFeOgvSGrttNIvUYyGy3gbHM33i24Qw1gLFQuqDhJRTYIg6dY1XywaRabyjgCv59GsEmwstiTf00KD1CdK02
+
+- Settings in GitPod Environment Variables
+
+### Stripe Part 4
+
+checkout/views.py
+```
+from django.shortcuts import render, redirect, reverse
+from django.contrib import messages
+from django.conf import settings
+
+from .forms import OrderForm
+from bag.contexts import bag_contents
+
+import stripe
+
+
+def checkout(request):
+    stripe_public_key = settings.STRIPE_PUBLIC_KEY
+    stripe_secret_key = settings.STRIPE_SECRET_KEY
+
+    bag = request.session.get('bag', {})
+    if not bag:
+        messages.error(request, "There's nothing in your bag at the moment")
+        return redirect(reverse('products'))
+
+    current_bag = bag_contents(request)
+    total = current_bag['grand_total']
+    stripe_total = round(total * 100)
+    stripe.api_key = stripe_secret_key
+    intent = stripe.PaymentIntent.create(
+        amount=stripe_total,
+        currency=settings.STRIPE_CURRENCY,
+    )
+
+    print(intent)
+
+    order_form = OrderForm()
+    template = 'checkout/checkout.html'
+    context = {
+        'order_form': order_form,
+        'stripe_public_key': 'pk_test_...',
+        'client_secret': 'test client secret',
+    }
+
+    return render(request, template, context)
+
+```
+
+- python3 manage.py runserver
+
+checkout/views.py
+```
+from django.shortcuts import render, redirect, reverse
+from django.contrib import messages
+from django.conf import settings
+
+from .forms import OrderForm
+from bag.contexts import bag_contents
+
+import stripe
+
+
+def checkout(request):
+    stripe_public_key = settings.STRIPE_PUBLIC_KEY
+    stripe_secret_key = settings.STRIPE_SECRET_KEY
+
+    bag = request.session.get('bag', {})
+    if not bag:
+        messages.error(request, "There's nothing in your bag at the moment")
+        return redirect(reverse('products'))
+
+    current_bag = bag_contents(request)
+    total = current_bag['grand_total']
+    stripe_total = round(total * 100)
+    stripe.api_key = stripe_secret_key
+    intent = stripe.PaymentIntent.create(
+        amount=stripe_total,
+        currency=settings.STRIPE_CURRENCY,
+    )
+
+    order_form = OrderForm()
+
+    if not stripe_public_key:
+        messages.warning(request, 'Stripe public key is missing. \
+            Did you forget to set it in your environment?')
+
+    template = 'checkout/checkout.html'
+    context = {
+        'order_form': order_form,
+        'stripe_public_key': stripe_public_key,
+        'client_secret': intent.client_secret,
+    }
+
+    return render(request, template, context)
+
+```
+
+### Stripe Part 5
+
+checkout/static/checkout/js/stripe_elements.js
+```
+/*
+    Core logic/payment flow for this comes from here:
+    https://stripe.com/docs/payments/accept-a-payment
+    CSS from here: 
+    https://stripe.com/docs/stripe-js
+*/
+
+var stripePublicKey = $('#id_stripe_public_key').text().slice(1, -1);
+var clientSecret = $('#id_client_secret').text().slice(1, -1);
+var stripe = Stripe(stripePublicKey);
+var elements = stripe.elements();
+var style = {
+    base: {
+        color: '#000',
+        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+        fontSmoothing: 'antialiased',
+        fontSize: '16px',
+        '::placeholder': {
+            color: '#aab7c4'
+        }
+    },
+    invalid: {
+        color: '#dc3545',
+        iconColor: '#dc3545'
+    }
+};
+var card = elements.create('card', {style: style});
+card.mount('#card-element');
+
+// Handle realtime validation errors on the card element
+card.addEventListener('change', function (event) {
+    var errorDiv = document.getElementById('card-errors');
+    if (event.error) {
+        var html = `
+            <span class="icon" role="alert">
+                <i class="fas fa-times"></i>
+            </span>
+            <span>${event.error.message}</span>
+        `;
+        $(errorDiv).html(html);
+    } else {
+        errorDiv.textContent = '';
+    }
+});
+
+// Handle form submit
+var form = document.getElementById('payment-form');
+
+form.addEventListener('submit', function(ev) {
+    ev.preventDefault();
+    card.update({ 'disabled': true});
+    $('#submit-button').attr('disabled', true);
+    stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+            card: card,
+        }
+    }).then(function(result) {
+        if (result.error) {
+            var errorDiv = document.getElementById('card-errors');
+            var html = `
+                <span class="icon" role="alert">
+                <i class="fas fa-times"></i>
+                </span>
+                <span>${result.error.message}</span>`;
+            $(errorDiv).html(html);
+            card.update({ 'disabled': false});
+            $('#submit-button').attr('disabled', false);
+        } else {
+            if (result.paymentIntent.status === 'succeeded') {
+                form.submit();
+            }
+        }
+    });
+});
+```
+- git add . 
+- git commit -m "Added basic checkout functionality"
+- git push
+
+
+
+
+
 
 
 
 
 
 - git add . 
-- git commit -m "added stripe elements"
+- git commit -m "Added basic checkout functionality"
 - git push
 - python3 manage.py runserver
+
 
 
 
