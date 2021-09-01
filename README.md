@@ -2564,13 +2564,25 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 
 ```
 
-- export STRIPE_PUBLIC_KEY=pk_test_51JSkAYFIHH8nktjFncXVV4ZrVSHrZx6NVqZeFmWmDmajpnKB4fjWYa3GzNGXy2TaXhVk6tGHMuHcIfwE1j4enZQA00wOBkNusP
-- set STRIPE_PUBLIC_KEY=pk_test_51JSkAYFIHH8nktjFncXVV4ZrVSHrZx6NVqZeFmWmDmajpnKB4fjWYa3GzNGXy2TaXhVk6tGHMuHcIfwE1j4enZQA00wOBkNusP
+- export STRIPE_PUBLIC_KEY=pk_test_...
+- set STRIPE_PUBLIC_KEY=pk_test_...
 
-- export STRIPE_SECRET_KEY=sk_test_51JSkAYFIHH8nktjFeOgvSGrttNIvUYyGy3gbHM33i24Qw1gLFQuqDhJRTYIg6dY1XywaRabyjgCv59GsEmwstiTf00KD1CdK02
-- set STRIPE_SECRET_KEY=sk_test_51JSkAYFIHH8nktjFeOgvSGrttNIvUYyGy3gbHM33i24Qw1gLFQuqDhJRTYIg6dY1XywaRabyjgCv59GsEmwstiTf00KD1CdK02
+- export STRIPE_SECRET_KEY=sk_test_...
+- set STRIPE_SECRET_KEY=sk_test_...
 
 - Settings in GitPod Environment Variables
+  - open GitPot Workspace Dashboard
+  - open Settings
+  - open Variables
+    - New Variable
+    - Name: STRIPE_PUBLIC_KEY
+    - Value: pk_test_...
+    - Scope: puksrevolution/*
+    - New Variable
+    - Name: STRIPE_SECRET_KEY
+    - Value: sk_test_...
+    - Scope: puksrevolution/*
+- Stop the Workspace and start it again (do to be on the save site first a git add .)
 
 ### Stripe Part 4
 
@@ -3509,17 +3521,255 @@ class StripeWH_Handler:
 
 ### Stripe Part 11
 
+checkout/webhook_handler.py
+```
+from django.http import HttpResponse
+
+
+class StripeWH_Handler:
+    """Handle Stripe webhooks"""
+
+    def __init__(self, request):
+        self.request = request
+
+    def handle_event(self, event):
+        """
+        Handle a generic/unknown/unexpected webhook event
+        """
+        return HttpResponse(
+            content=f'Unhandled webhook received: {event["type"]}',
+            status=200)
+
+    def handle_payment_intent_succeeded(self, event):
+        """
+        Handle the payment_intent.succeeded webhook from Stripe
+        """
+        return HttpResponse(
+            content=f'Webhook received: {event["type"]}',
+            status=200)
+
+    def handle_payment_intent_payment_failed(self, event):
+        """
+        Handle the payment_intent.payment_failed webhook from Stripe
+        """
+        return HttpResponse(
+            content=f'Webhook received: {event["type"]}',
+            status=200)
 
 ```
 
+checkout/urls.py
+```
+from django.urls import path
+from . import views
+from .webhooks import webhook
+
+urlpatterns = [
+    path('', views.checkout, name='checkout'),
+    path('checkout_success/<order_number>', views.checkout_success, name='checkout_success'),
+    path('wh/', webhook, name='webhook'),
+]
+
 ```
 
+checkout/webhooks.py
+```
+from django.conf import settings
+from django.http import HttpResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+
+from checkout.webhook_handler import StripeWH_Handler
+
+import stripe
 
 
+@require_POST
+@csrf_exempt
+def webhook(request):
+    """Listen for webhooks from Stripe"""
+    # Setup
+    wh_secret = settings.STRIPE_WH_SECRET
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    # Get the webhook data and verify its signature
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+        payload, sig_header, wh_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+    except Exception as e:
+        return HttpResponse(content=e, status=400)
+
+    print('Success!')
+    return HttpResponse(status=200)
+
+```
+
+boutique/settings.py 
+```
+STRIPE_WH_SECRET = os.getenv('STRIPE_WH_SECRET', '')
+
+```
+
+- creating endpoint
+  - get hompage url https://8000-green-elephant-3el2rqbx.ws-eu16.gitpod.io/
+  - Stripe:
+    - Developer
+    - Add an endpoint
+    - Endpoint URL: https://8000-green-elephant-3el2rqbx.ws-eu16.gitpod.io/checkout/wh/
+    - +select events
+      - select all events
+      - add events
+    - Add endpoint
+    - get the Signing secret   
+
+- export STRIPE_WH_SECRET=whsec_0eauEPVhTEE4jpXNT0y2IIMDInW0WrwD
+- set STRIPE_WH_SECRET=whsec_0eauEPVhTEE4jpXNT0y2IIMDInW0WrwD
+
+- Settings in GitPod Environment Variables
+  - open GitPot Workspace Dashboard
+  - open Settings
+  - open Variables
+    - New Variable
+    - Name: STRIPE_PUBLIC_KEY
+    - Value: pk_test_...
+    - Scope: puksrevolution/*
+    - New Variable
+    - Name: STRIPE_SECRET_KEY
+    - Value: sk_test_...
+    - Scope: puksrevolution/*
+- Stop the Workspace and start it again (do to be on the save site first a git add .)
+
+- python3 manage.py runserver
+  - in terminal needs to see the message:
+    Success!
+    [01/Sep/2021 16:34:41] "POST /checkout/wh/ HTTP/1.1" 200 0
+
+
+### Stripe Part 12
+
+checkout/webhooks.py
+```
+from django.conf import settings
+from django.http import HttpResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+
+from checkout.webhook_handler import StripeWH_Handler
+
+import stripe
+
+
+@require_POST
+@csrf_exempt
+def webhook(request):
+    """Listen for webhooks from Stripe"""
+    # Setup
+    wh_secret = settings.STRIPE_WH_SECRET
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    # Get the webhook data and verify its signature
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+        payload, sig_header, wh_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+    except Exception as e:
+        return HttpResponse(content=e, status=400)
+
+    # Set up a webhook handler
+    handler = StripeWH_Handler(request)
+
+    # Map webhook events to relevant handler functions
+    event_map = {
+        'payment_intent.succeeded': handler.handle_payment_intent_succeeded,
+        'payment_intent.payment_failed': handler.handle_payment_intent_payment_failed,
+    }
+
+    # Get the webhook type from Stripe
+    event_type = event['type']
+
+    # If there's a handler for it, get it from the event map
+    # Use the generic one by default
+    event_handler = event_map.get(event_type, handler.handle_event)
+
+    # Call the event handler with the event
+    response = event_handler(event)
+    return response
+
+```
+
+just for testing checkout/webhooks.py
+```
+from django.http import HttpResponse
+
+
+class StripeWH_Handler:
+    """Handle Stripe webhooks"""
+
+    def __init__(self, request):
+        self.request = request
+
+    def handle_event(self, event):
+        """
+        Handle a generic/unknown/unexpected webhook event
+        """
+        return HttpResponse(
+            content=f'Unhandled webhook received: {event["type"]}',
+            status=200)
+
+    def handle_payment_intent_succeeded(self, event):
+        """
+        Handle the payment_intent.succeeded webhook from Stripe
+        """
+        return HttpResponse(
+            content=f'Webhook received: {event["type"]}',
+            status=200)
+
+    def handle_payment_intent_payment_failed(self, event):
+        """
+        Handle the payment_intent.payment_failed webhook from Stripe
+        """
+        return HttpResponse(
+            content=f'Payment Failed Webhook received: {event["type"]}',
+            status=200)
+
+```
+- test Webhook on Stripe
+  - account.external_account.created
+    Response
+    Test webhook sent successfully
+    Unhandled webhook received: account.updated
+  - payment_intend.succeeded:
+    Response
+    Test webhook sent successfully
+    Webhook received: payment_intent.succeeded
+  - payment_intend.payment_failed
+    Response
+    Test webhook sent successfully
+    Payment Failed Webhook received: payment_intent.payment_failed
 - git add . 
-- git commit -m "Added basic checkout functionality"
+- git commit -m "Added class methods to webhook handler and webhook view"
 - git push
-
 
 
 
