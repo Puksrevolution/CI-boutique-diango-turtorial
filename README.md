@@ -7828,11 +7828,78 @@ def order_history(request, order_number):
 
 ### Fixing The Image Field - Part 1
 
+products/widgets.py 
+```
+from django.forms.widgets import ClearableFileInput
+from django.utils.translation import gettext_lazy as _
+
+
+class CustomClearableFileInput(ClearableFileInput):
+    clear_checkbox_label = _('Remove')
+    initial_text = _('Current Image')
+    input_text = _('')
+    template_name = 'products/custom_widget_templates/custom_clearable_file_input.html'
+
+```
+
+products/templates/products/custom_widget_templates/custom_clearable_file_input.html
+```
+{% if widget.is_initial %}
+    <p>{{ widget.initial_text }}:</p>
+    <a href="{{ widget.value.url }}">
+        <img width="96" height="96" class="rounded shadow-sm" src="{{ widget.value.url }}">
+    </a>
+    {% if not widget.required %}
+        <div class="custom-control custom-checkbox mt-2">
+            <input class="custom-control-input" type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}">
+            <label class="custom-control-label text-danger" for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label>
+        </div>
+    {% endif %}<br>
+    {{ widget.input_text }}
+{% endif %}
+<span class="btn btn-black rounded-0 btn-file">
+    Select Image <input id="new-image" type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+</span>
+<strong><p class="text-danger" id="filename"></p></strong>
+```
+
+products/forms.py 
+```
+from django import forms
+from .widgets import CustomClearableFileInput
+from .models import Product, Category
+
+
+class ProductForm(forms.ModelForm):
+
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+    image = forms.ImageField(label='Image', required=False, widget=CustomClearableFileInput)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        categories = Category.objects.all()
+        friendly_names = [(c.id, c.get_friendly_name()) for c in categories]
+
+        self.fields['category'].choices = friendly_names
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'border-black rounded-0'
+
+```
+- git add . 
+- git commit -m "Product admin - Fixing the image field part 1"
+- git push
+
+
+### Fixing The Image Field - Part 2
+
 
 
 
 - git add . 
-- git commit -m "Product Admin - Securing the Views"
+- git commit -m "Product admin - Fixing the image field part 1"
 - git push
 - python3 manage.py runserver
 
