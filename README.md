@@ -8494,14 +8494,32 @@ ALLOWED_HOSTS = ['ci-django-boutique.herokuapp.com', 'localhost']
 - heroku git:remote -a ci-django-boutique
 - git push heroku main
 
+Heroku
+- click: GitHub
+- Search for a repository to connect to: CI-boutique-diango-turtorial
+- click: Connect
+- click: Enable Automatic Deploys
+- https://miniwebtool.com/de/django-secret-key-generator/
+- Settings
+  - Confi Vars
+    - Key: SECRET_KEY
+    - Value: 7%django-secret-key-generator#cx5
 
+boutique/settings.py
+```
+SECRET_KEY = os.environ.get('SECRET_KEY', '')
 
+DEBUG = 'DEVELOPMENT' in os.environ
+```
+- git add . 
+- git commit -m "Removed secret key and set debug"
+- git push
 
 
 
 
 - git add . 
-- git commit -m "Product Admin - Fixing the image field part 2"
+- git commit -m "Removed secret key and set debug"
 - git push
 - python3 manage.py runserver
 
