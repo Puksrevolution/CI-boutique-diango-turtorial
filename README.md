@@ -8457,6 +8457,39 @@ DATABASES = {
 - git push
 
 
+### Deploying to Heroku
+
+boutique/settings.py
+```
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+```
+
+- pip3 install install gunicorn
+- pip3 freeze > requirements.txt
+
+create Procfile
+```
+web: gunicorn boutique_ado.wsgi:application
+```
+
+- heroku login -i
+- heroku config:set DISABLE_COLLECTSTATIC=1 --app ci-django-boutique
+
+boutique/settings.py
+```
+ALLOWED_HOSTS = ['ci-django-boutique.herokuapp.com', 'localhost']
+```
+
 
 
 
