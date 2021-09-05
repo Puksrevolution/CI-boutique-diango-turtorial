@@ -1,3 +1,43 @@
+# Table of contents
+
++ [Stripe Part 1](#stripe-part-1)
++ [Stripe Part 2](#stripe-part-2)
++ [Stripe Part 3](#stripe-part-3)
++ [Stripe Part 4](#stripe-part-4)
++ [Stripe Part 5](#stripe-part-5)
++ [Stripe Part 6](#stripe-part-6)
++ [Stripe Part 7](#stripe-part-7)
++ [Stripe Part 8](#stripe-part-8)
++ [Stripe Part 9](#stripe-part-9)
++ [Stripe Part 10](#stripe-part-10)
++ [Stripe Part 11](#stripe-part-11)
++ [Stripe Part 12](#stripe-part-12)
++ [Stripe Part 13](#stripe-part-13)
++ [Stripe Part 14](#stripe-part-14)
++ [Stripe Part 15](#stripe-part-15)
++ [Stripe Part 16](#stripe-part-16)
++ [Stripe Part 17](#stripe-part-17)
++ [Profile App - Part 1](#profile-app-part-1)
++ [Profile App - Part 2](#profile-app-part-1)
++ [Profile App - Part 3](#profile-app-part-1)
++ [Profile App - Part 4](#profile-app-part-1)
++ [Profile App - Part 5](#profile-app-part-1)
++ [Profile App - Part 6](#profile-app-part-1)
++ [Profile App - Part 7](#profile-app-part-1)
++ [Profile App - Part 8](#profile-app-part-1)
++ [Profile App - Part 9](#profile-app-part-1)
++ [Profile App - Part 10](#profile-app-part-1)
++ [Product Form](#profile-app-part-1)
++ [Add Product View](#profile-app-part-1)
++ [Finishing the Add Product Functionality](#profile-app-part-1)
++ [Editing Products](#profile-app-part-1)
++ [Deleting Products](#profile-app-part-1)
++ [Securing the Views](#profile-app-part-1)
++ [Fixing The Image Field - Part 1](#profile-app-part-1)
++ [Fixing The Image Field - Part 2](#profile-app-part-1)
++ [Creating a Heroku App](#profile-app-part-1)
+
+
 - pip3 install django
 - django-admin startproject boutique .
 - touch .gitignore
@@ -7002,6 +7042,28 @@ templates/includes/mobile-top-header.html
     </a>
 </li>
 ```
+
+To use the current superuser account created at the start, head over to your profiles > models.py and comment out the the code below. Then log in with your superuser account (from frontend login; or the url with /admin). Once logged in, remember to REVERT your changes - i.e. un-comment the if statement and re-indent the UserProfile.objects.create(user=instance)
+```
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    """
+    Create or update the user profile
+    """
+    # if created:
+    UserProfile.objects.create(user=instance)
+    # Existing users: just save the profile
+    # instance.userprofile.save()
+
+```
+
+OR
+you can create a new superuser account with python3 manage.py createsuperuser
+- python3 manage.py createsuperuser
+  - username: user
+  - Email address: user@user.com
+  - password: adminaccount
+
 - git add . 
 - git commit -m "Product admin - Finished add product functionality."
 - git push
@@ -7060,7 +7122,6 @@ from django.db.models.functions import Lower
 from .models import Product, Category
 from .forms import ProductForm
 
-# Create your views here.
 
 def all_products(request):
     """ A view to show all products, including sorting and search queries """
@@ -7200,7 +7261,6 @@ from django.db.models.functions import Lower
 from .models import Product, Category
 from .forms import ProductForm
 
-# Create your views here.
 
 def all_products(request):
     """ A view to show all products, including sorting and search queries """
@@ -8308,6 +8368,96 @@ products/templates/products/add_product.html
 - git add . 
 - git commit -m "Product Admin - Fixing the image field part 2"
 - git push
+
+
+### Creating a Heroku App
+
+Heroku
+- create new Heroku App
+  - click: Create New App
+  - App name: ci-django-boutique
+  - Choose a region: Europe
+  - click: Create App
+- Resources
+  - type in search field: Heroku Postgres
+  - Plan name: Hobby Dev - Free
+  - click: Submit Order Form
+
+GitPod
+- Terminal
+  - pip3 install dj_database_url
+  - pip3 install psycopg2-binary
+  - pip3 freeze > requirements.txt
+
+boutique/settings.py
+```
+import os
+import dj_database_url
+
+
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+# }
+
+
+DATABASES = {
+        'default': dj_database_url.parse()
+}
+```
+
+Heroku
+- Settings
+  - Config Vars
+  - Value from DATABASE_URL: postgres://...
+
+boutique/settings.py
+```
+import os
+import dj_database_url
+
+
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+# }
+
+
+DATABASES = {
+        'default': dj_database_url.parse(postgres://...)
+}
+```
+
+- unset PGHOSTADDR
+- python3 manage.py showmigrations
+- python3 manage.py migrate
+- python3 manage.py loaddata categories
+- python3 manage.py loaddata products
+- python3 manage.py createsuperuser
+  - Username: Admin
+  - Email address: admin@admin.com
+  - Password: superuser
+  - Password (again): superuser
+
+boutique/settings.py
+```
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+```
+- git add . 
+- git commit -m "Deployment part 1"
+- git push
+
+
+
 
 
 - git add . 
