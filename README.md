@@ -8516,10 +8516,209 @@ DEBUG = 'DEVELOPMENT' in os.environ
 - git push
 
 
+### Creating an AWS Account
+
+- aws.amazon.com
+  - Creat an AWS Account
+
+- Sign In AWS Account
+  - search: s3
+  - create: New bucket
+    - Bucket name: ci-django-boutique
+    - AWS Region: region near to yours
+    - uncheck: Block all public access
+    - check: I acknowledge that the current settings might result in this bucket and the objects within becoming public.
+    - click: Create Bucket
+    - click on: ci-django-boutique
+    - click: Properties
+    - Static website hosting
+    
+    - Permissions
+      - Cross-origin resource sharing (CORS)
+      ```
+      [
+        {
+            "AllowedHeaders": [
+                "Authorization"
+            ],
+            "AllowedMethods": [
+                "GET"
+            ],
+            "AllowedOrigins": [
+                "*"
+            ],
+            "ExposeHeaders": []
+        }
+      ]
+      ```
+    - Bucket policy
+      - Policy Generator
+        - Select Type of Policy: S3 Bucket Policy
+        - Principal: *
+        - Actions: GetObject
+    - copy ARN: arn:aws:s3:::ci-django-boutique
+        - Amazon Resource Name (ARN): arn:aws:s3:::ci-django-boutique
+        - click: Add Statement
+        - click: Generate Policy
+        - copy Policy JSON Document
+        ```
+        {
+        "Id": "Policy1630877118734",
+        "Version": "2012-10-17",
+        "Statement": [
+                {
+                "Sid": "Stmt1630877059200",
+                "Action": [
+                    "s3:GetObject"
+                ],
+                "Effect": "Allow",
+                "Resource": "arn:aws:s3:::ci-django-boutique",
+                "Principal": "*"
+                }
+            ]
+        }
+        ```
+    - paste it into Bucket policy
+    - add /* to: "Resource": "arn:aws:s3:::ci-django-boutique",
+    - Access control list (ACL)
+      - Everyone (public access)
+        - check: List
+  - search: IAM
+    - User groups
+      - click: Create group
+        - User group name: manage-boutique
+        - click: Create group
+    - Policies
+      - Create Policy
+      - JSON
+      - Import managed policy
+        - search: s3
+        - select: AmazonS3FullAccess
+        - click: Import
+        - change JSON
+        ```
+        "Resource": [
+            "arn:aws:s3:::ci-django-boutique",
+            "arn:aws:s3:::ci-django-boutique/*"
+        ]
+        ```
+        - click: Next: Tags
+        - click: Next: Review
+        - Review policy Name: boutique-policy
+        - Description: Access to S3 bucket for Boutique static files
+        - click: Create Policy
+    - User groups
+      - manage-boutique
+      - Permissions
+      - Add permissions
+      - Attach Policy
+      - select: boutique-policy
+    - Users
+      - Add users
+      - User name: boutique-staticfiles-user
+      - check: Programmatic access
+      - click: Next:Permissions
+      - check: manage-boutique
+      - clicking througt till end
+      - Download .csv and save it !important!
+
+
+### Connecting Django to S3
+
+- pip3 install install boto3
+- pip3 install install django-storages
+- pip3 freeze > requirements.txt
+
+boutique/settings.py
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'home',
+    'products',
+    'bag',
+    'checkout',
+    'profiles',
+
+    # Other
+    'crispy_forms',
+    'storages',
+]
+
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.0/howto/static-files/
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+if 'USE_AWS' in os.environ:
+    # Bucket Config
+    AWS_STORAGE_BUCKET_NAME = 'ci-django-boutique'
+    AWS_S3_REGION_NAME = 'eu-north-1'
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')    
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+
+    # Static and media files
+    STATICFILES_STORAGE = 'custom_storages.StaticStorage'
+    STATICFILES_LOCATION = 'static'
+    DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
+    MEDIAFILES_LOCATION = 'media'
+
+    # Override static and media URLs in production
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
+```
+
+Heroku
+- Settings
+  - Confi Vars
+    - Key: AWS_ACCESS_KEY_ID
+    - Value: get Access key ID from the downloaded .csv 
+    - Key: AWS_SECRET_ACCESS_KEY
+    - Value: get Secret access key from the downloaded .csv
+    - Key: USE_AWS
+    - Value: True
+    - remove
+      - Key: DISABLE_COLLECTSTATIC
+      - Value: 1
+
+create custom_storages.py
+```
+from django.conf import settings
+from storages.backends.s3boto3 import S3Boto3Storage
+
+
+class StaticStorage(S3Boto3Storage):
+    location = settings.STATICFILES_LOCATION
+
+
+class MediaStorage(S3Boto3Storage):
+    location = settings.MEDIAFILES_LOCATION
+
+```
+
+- git add . 
+- git commit -m "deployment part 5"
+- git push
+
+
 
 
 - git add . 
-- git commit -m "Removed secret key and set debug"
+- git commit -m "deployment part 5"
 - git push
 - python3 manage.py runserver
 
