@@ -8489,8 +8489,14 @@ boutique/settings.py
 ```
 ALLOWED_HOSTS = ['ci-django-boutique.herokuapp.com', 'localhost']
 ```
+- git add . 
+- git commit -m "Deployment part 2"
+- git push heroku master
 
 
+- git add . 
+- git commit -m "Deployment part 2"
+- git push heroku master
 
 
 - git add . 
