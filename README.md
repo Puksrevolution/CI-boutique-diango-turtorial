@@ -8479,7 +8479,7 @@ else:
 
 create Procfile
 ```
-web: gunicorn boutique_ado.wsgi:application
+web: gunicorn boutique.wsgi:application
 ```
 
 - heroku login -i
@@ -8491,12 +8491,13 @@ ALLOWED_HOSTS = ['ci-django-boutique.herokuapp.com', 'localhost']
 ```
 - git add . 
 - git commit -m "Deployment part 2"
-- git push heroku master
+- heroku git:remote -a ci-django-boutique
+- git push heroku main
 
 
-- git add . 
-- git commit -m "Deployment part 2"
-- git push heroku master
+
+
+
 
 
 - git add . 
