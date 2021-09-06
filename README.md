@@ -8746,6 +8746,105 @@ if 'USE_AWS' in os.environ:
 - git commit -m "Added cache control"
 - git push
 
+AWS
+- ci-django-boutique
+  - Objects
+    - Create Folder
+      - media
+      - open media folder
+      - upload
+      - add files
+      - Permissions
+      - Access control list (ACL)
+      - check: Grant public-read access
+      - check: I understand the risk of granting public-read access to the specified objects.
+      - upload
+
+
+- https://ci-django-boutique.herokuapp.com/
+  - log in to force allauth to create the superuser email address in database
+
+- https://ci-django-boutique.herokuapp.com/admin/
+  - log in
+  - email addresses
+  - mark email Verified and Primary
+
+Heroku
+- Settings
+  - Confi Vars
+    - Key: STRIPE_PUBLIC_KEY
+    - Value: pk_test_...
+    - Key: STRIPE_SECRET_KEY
+    - Value: sk_test_...
+
+Update Endpoint on Stripe
+- Developers
+  - webhooks
+  - Add endpoint
+    - https://ci-django-boutique.herokuapp.com/checkout/wh/
+    - select all events
+
+Heroku
+- Settings
+  - Confi Vars
+    - Key: STRIPE_WH_SECRET
+    - Value: whsec_...
+
+Stripe
+- test webhook
+  - send test webhook
+
+
+### Sending Real Emails with Django
+
+Gmail
+- Settings
+- Accounts & Import
+- Other Google Account settings
+- Security
+- 2-Step Verification
+- click: Get Started
+- confirm with sms
+- back to Security
+- App password
+- Select App: Mail
+- Select device: Others
+  - Django
+- get App password
+
+Heroku
+- Settings
+  - Confi Vars
+    - Key: EMAIL_HOST_PASS
+    - Value: gmail app password
+    - Key: EMAIL_HOST_USER
+    - Value: puksbusinessworld@gmail.com
+
+
+boutique/settings.py
+
+- remove
+```
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+```
+```
+if 'DEVELOPMENT' in os.environ:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'boutiqueado@example.com'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_USE_TLS = True
+    EMAIL_PORT = 587
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASS')
+    DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
+
+```
+- git add . 
+- git commit -m "sending real emails"
+- git push
+
 
 
 - git add . 
