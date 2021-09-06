@@ -8846,12 +8846,27 @@ else:
 - git push
 
 
+### Base CSS, Login & Registration Refactor
+
+- update static/css/base.css
+- update templates/allauth/account/base.html
+- update templates/includes/main-nav.html
+- update templates/includes/mobile-top-header.html
+- git add . 
+- git commit -m "base.css and login/reg refactor"
+- git push
+
+
+
 
 - git add . 
-- git commit -m "deployment part 5"
+- git commit -m "base.css and login/reg refactor"
 - git push
 - python3 manage.py runserver
-
+- Username: Admin
+  - Email address: admin@admin.com
+  - Password: superuser
+  - Password (again): superuser
 
 
 
