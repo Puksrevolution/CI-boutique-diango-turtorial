@@ -8857,6 +8857,16 @@ else:
 - git push
 
 
+### Shopping Bag Refactor
+
+- update bag/templates/bag
+- git add . 
+- git commit -m "shopping bag refactor"
+- git push
+
+
+### Flake8 & Python Refactoring
+
 
 
 - git add . 
