@@ -8866,29 +8866,7 @@ else:
 
 
 ### Flake8 & Python Refactoring
-
-
-
+- python3 - m flake8
 - git add . 
-- git commit -m "base.css and login/reg refactor"
+- git commit -m "Flake8 & Python Refactoring"
 - git push
-- python3 manage.py runserver
-- Username: Admin
-  - Email address: admin@admin.com
-  - Password: superuser
-  - Password (again): superuser
-
-
-
-e-commerce web application
-complete with product search and filter functionality.
-A live fully functional payment system.
-A full-featured authentication system including email confirmations and user profiles.
-And real-time notifications that guide the user's experience.
-To do this we'll use technologies that are popularly used in modern software development
-Such as Stripe, Amazon Web Services, Heroku, and more.
-This project is not designed to demonstrate general concepts.
-Or leave you with something that looks good but doesn't do much.
-By the time you've completed it you'll have everything you need to solve real-world
-problems as well as build elegant web applications that not only look good and function well.
-But even have the potential to become sustainable revenue-generating busines
